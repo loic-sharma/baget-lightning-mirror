@@ -1,0 +1,32 @@
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- See: https://github.com/Azure/azure-functions-host/issues/3386#issuecomment-419565714 -->
+  <PropertyGroup>
+    <_IsFunctionsSdkBuild Condition="$(_FunctionsTaskFramework) != ''">true</_IsFunctionsSdkBuild>
+    <_FunctionsExtensionsDir>$(TargetDir)</_FunctionsExtensionsDir>
+    <_FunctionsExtensionsDir Condition="$(_IsFunctionsSdkBuild) == 'true'">$(_FunctionsExtensionsDir)bin</_FunctionsExtensionsDir>
+  </PropertyGroup>
+
+  <Target Name="CopyExtensionsJson" AfterTargets="_GenerateFunctionsAndCopyContentFiles">
+    <Message Importance="High" Text="Overwritting extensions.json file with one from build." />
+
+    <Copy Condition="$(_IsFunctionsSdkBuild) == 'true' AND Exists('$(_FunctionsExtensionsDir)\extensions.json')"
+          SourceFiles="$(_FunctionsExtensionsDir)\extensions.json"
+          DestinationFiles="$(PublishDir)bin\extensions.json"
+          OverwriteReadOnlyFiles="true"
+          ContinueOnError="true"/>
+  </Target>
+
+  <!-- See: https://github.com/NuGet/Home/issues/4989#issuecomment-426666530 -->
+  <Target Name="AddPackageAliases" BeforeTargets="ResolveReferences" Outputs="%(PackageReference.Identity)">
+      <PropertyGroup>
+          <AliasPackageReference>@(PackageReference->'%(Identity)')</AliasPackageReference>
+          <AliasName>@(PackageReference->'%(Alias)')</AliasName>
+      </PropertyGroup>
+
+      <ItemGroup>
+          <ReferencePath Condition="'%(FileName)'=='$(AliasPackageReference)'">
+              <Aliases>$(AliasName)</Aliases>
+          </ReferencePath>
+      </ItemGroup>
+  </Target>
+</Project>
