@@ -4,8 +4,9 @@
     <AzureFunctionsVersion>v2</AzureFunctionsVersion>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="BaGet.Core" Version="0.1.60-prerelease" />
-    <PackageReference Include="BaGet.Azure" Version="0.1.60-prerelease" />
+    <PackageReference Include="BaGet.Core" Version="0.1.68-prerelease" />
+    <PackageReference Include="BaGet.Azure" Version="0.1.68-prerelease" />
+    <PackageReference Include="BaGet.Database.SqlServer" Version="0.1.68-prerelease" />
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.ServiceBus" Version="3.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="2.2.2" />
     <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="1.0.24" />

@@ -18,6 +18,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Willezone.Azure.WebJobs.Extensions.DependencyInjection;
 using BaGet.Azure.Configuration;
+using BaGet.Database.SqlServer;
 
 [assembly: WebJobsStartup(typeof(Startup))]
 namespace BaGet
