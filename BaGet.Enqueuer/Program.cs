@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -36,6 +37,13 @@ namespace BaGet
             var sourceUrl = args[0];
             var connectionString = args[1];
 
+            var cursor = DateTimeOffset.MinValue;
+            var cursorPath = Path.Combine(Directory.GetCurrentDirectory(), "cursor.txt");
+            if (File.Exists(cursorPath))
+            {
+                cursor = DateTimeOffset.Parse(File.ReadAllText(cursorPath));
+            }
+
             // Prepare the processing.
             ThreadPool.SetMinThreads(MaxDegreeOfParallelism, completionPortThreads: 4);
             ServicePointManager.DefaultConnectionLimit = MaxDegreeOfParallelism;
@@ -52,7 +60,7 @@ namespace BaGet
             // Download the catalog index and deserialize it.
             Console.WriteLine($"Fetching catalog index {catalogIndexUrl}...");
             var indexString = await httpClient.GetStringAsync(catalogIndexUrl);
-            Console.WriteLine($"Fetched catalog index {catalogIndexUrl}, fetching catalog pages...");
+            Console.WriteLine($"Fetched catalog index {catalogIndexUrl}, fetching catalog pages after cursor '{cursor.ToString("O")}'...");
             var index = JsonConvert.DeserializeObject<CatalogIndex>(indexString);
 
             // Find all pages in the catalog index.
@@ -61,6 +69,13 @@ namespace BaGet
 
             await ProcessInParallel(pageItems, async pageItem =>
             {
+                // Skip pages that were committed before our cursor's timestamp.
+                var pageCommitTimeStamp = new DateTimeOffset(pageItem.CommitTimeStamp);
+                if (cursor > pageCommitTimeStamp)
+                {
+                    return;
+                }
+
                 // Download the catalog page and deserialize it.
                 var pageString = await httpClient.GetStringAsync(pageItem.Url);
                 var page = JsonConvert.DeserializeObject<CatalogPage>(pageString);
@@ -69,6 +84,13 @@ namespace BaGet
 
                 foreach (var pageLeafItem in page.Items)
                 {
+                    // Skip leafs that were committed before our cursor's timestamp.
+                    var leafCommitTimeStamp = new DateTimeOffset(pageLeafItem.CommitTimeStamp);
+                    if (cursor > leafCommitTimeStamp)
+                    {
+                        return;
+                    }
+
                     allLeafItemsBag.Add(pageLeafItem);
                 }
             });
@@ -98,6 +120,10 @@ namespace BaGet
                     ContentType = "text/plain;charset=unicode"
                 });
             });
+
+            var nextCursor = new DateTimeOffset(index.CommitTimeStamp).ToString("O");
+            Console.WriteLine($"Saving cursor '{nextCursor}'");
+            File.WriteAllText(cursorPath, nextCursor);
 
             Console.WriteLine();
             Console.WriteLine("Done");
