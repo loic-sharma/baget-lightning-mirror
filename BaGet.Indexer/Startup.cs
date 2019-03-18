@@ -37,6 +37,7 @@ namespace BaGet
             services.AddTransient<IPackageService, PackageService>();
             services.AddSingleton<IPackageStorageService, PackageStorageService>();
             services.AddTransient<ISearchService, DatabaseSearchService>();
+            services.AddSingleton<IFrameworkCompatibilityService, FrameworkCompatibilityService>();
             services.AddTransient<IStorageService, BlobStorageService>();
             services.AddScoped<IContext, SqlServerContext>();
 
